@@ -8,6 +8,8 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtGui import QAction
 from PySide6.QtCore import Qt
+from src.widgets.canvas import EditorCanvas
+from src.widgets.properties import PropertiesPanel
 
 from src.widgets.canvas import EditorCanvas
 
@@ -28,6 +30,11 @@ class VectorEditorWindow(QMainWindow):
         self._create_menu()
         self._create_status_bar()
         self._setup_layout()
+        self.props_panel = PropertiesPanel(self.canvas.scene)
+
+        main_layout = QHBoxLayout()
+        main_layout.addWidget(self.canvas)
+        main_layout.addWidget(self.props_panel)
 
     def _create_menu(self):
         file_menu = self.menuBar().addMenu("&File")

@@ -1,15 +1,22 @@
-from abc import abstractmethod 
-
-from PySide6.QtWidgets import QGraphicsPathItem
-from PySide6.QtGui import QPen, QColor, QPainterPath
+from PySide6.QtWidgets import (
+    QGraphicsPathItem,
+    QGraphicsItemGroup
+)
+from PySide6.QtGui import (
+    QPen,
+    QColor,
+    QPainterPath
+)
 from PySide6.QtCore import QPointF
-
+from abc import abstractmethod
 
 class Shape(QGraphicsPathItem):
     def __init__(self, color: str = "black", stroke_width: int = 2):
         super().__init__()
+
         self.color = color
         self.stroke_width = stroke_width
+
         self._setup_pen()
         self._setup_flags()
 
@@ -17,11 +24,22 @@ class Shape(QGraphicsPathItem):
         pen = QPen(QColor(self.color))
         pen.setWidth(self.stroke_width)
         self.setPen(pen)
+    
+    def set_pen_width(self, value: int):
+        pen = self.pen()
+        pen.setWidth(value)
+        self.setPen(pen)
+
+    def set_active_color(self, color: str):
+        pen = self.pen()
+        pen.setColor(QColor(color))
+        self.setPen(pen)
 
     def _setup_flags(self):
-        self.setFlag(QGraphicsPathItem.GraphicsItemFlag.ItemIsSelectable)
-        self.setFlag(QGraphicsPathItem.GraphicsItemFlag.ItemIsMovable)
-        self.setFlag(QGraphicsPathItem.GraphicsItemFlag.ItemSendsGeometryChanges)
+        self.setFlag(QGraphicsPathItem.GraphicsItemFlag.ItemIsSelectable, True)
+        self.setFlag(QGraphicsPathItem.GraphicsItemFlag.ItemIsMovable, True)
+        self.setFlag(QGraphicsPathItem.GraphicsItemFlag.ItemSendsGeometryChanges, True)
+
 
     @property
     @abstractmethod
@@ -33,135 +51,128 @@ class Shape(QGraphicsPathItem):
         pass
 
     @abstractmethod
-    def set_geometry(self, start_point: QPointF, end_point: QPointF):
+    def set_geometry(self, start: QPointF, end: QPointF):
         pass
 
     def set_active_color(self, color: str):
         self.color = color
-        self._setup_pen()
+        pen = self.pen()
+        pen.setColor(QColor(color))
+        self.setPen(pen)
 
 
 class Rectangle(Shape):
-    def __init__(self, x, y, w, h, color="black", stroke_width=2):
+    def __init__(self, x=0, y=0, w=0, h=0, color="black", stroke_width=2):
         super().__init__(color, stroke_width)
-
-        self.x = x
-        self.y = y
-        self.w = w
-        self.h = h
-
-        self._create_geometry()
-
-    def _create_geometry(self):
-        path = QPainterPath()
-        path.addRect(self.x, self.y, self.w, self.h)
-        self.setPath(path)
-
-    def set_geometry(self, start_point: QPointF, end_point: QPointF):
-        self.x = min(start_point.x(), end_point.x())
-        self.y = min(start_point.y(), end_point.y())
-        self.w = abs(end_point.x() - start_point.x())
-        self.h = abs(end_point.y() - start_point.y())
-
-        self._create_geometry()
+        self.set_geometry(QPointF(x, y), QPointF(x + w, y + h))
 
     @property
     def type_name(self):
         return "rect"
 
+    def set_geometry(self, start, end):
+        x = min(start.x(), end.x())
+        y = min(start.y(), end.y())
+        w = abs(end.x() - start.x())
+        h = abs(end.y() - start.y())
+
+        path = QPainterPath()
+        path.addRect(x, y, w, h)
+        self.setPath(path)
+
     def to_dict(self):
+        rect = self.path().boundingRect()
         return {
             "type": self.type_name,
+            "pos": [self.x(), self.y()],
             "props": {
-                "x": self.x,
-                "y": self.y,
-                "w": self.w,
-                "h": self.h,
+                "x": rect.x(),
+                "y": rect.y(),
+                "w": rect.width(),
+                "h": rect.height(),
                 "color": self.pen().color().name(),
                 "stroke_width": self.pen().width()
             }
         }
 
-
 class Ellipse(Shape):
-    def __init__(self, x, y, w, h, color="black", stroke_width=2):
-        super().__init__(color, stroke_width)
-
-        self.x = x
-        self.y = y
-        self.w = w
-        self.h = h
-
-        self._create_geometry()
-
-    def _create_geometry(self):
-        path = QPainterPath()
-        path.addEllipse(self.x, self.y, self.w, self.h)
-        self.setPath(path)
-
-    def set_geometry(self, start_point: QPointF, end_point: QPointF):
-        self.x = min(start_point.x(), end_point.x())
-        self.y = min(start_point.y(), end_point.y())
-        self.w = abs(end_point.x() - start_point.x())
-        self.h = abs(end_point.y() - start_point.y())
-
-        self._create_geometry()
-
     @property
     def type_name(self):
         return "ellipse"
 
+    def set_geometry(self, start, end):
+        x = min(start.x(), end.x())
+        y = min(start.y(), end.y())
+        w = abs(end.x() - start.x())
+        h = abs(end.y() - start.y())
+
+        path = QPainterPath()
+        path.addEllipse(x, y, w, h)
+        self.setPath(path)
+
     def to_dict(self):
+        rect = self.path().boundingRect()
         return {
             "type": self.type_name,
             "props": {
-                "x": self.x,
-                "y": self.y,
-                "w": self.w,
-                "h": self.h,
+                "x": rect.x(),
+                "y": rect.y(),
+                "w": rect.width(),
+                "h": rect.height(),
                 "color": self.pen().color().name(),
                 "stroke_width": self.pen().width()
             }
         }
 
 class Line(Shape):
-    def __init__(self, x1, y1, x2, y2, color="black", stroke_width=2):
-        super().__init__(color, stroke_width)
-
-        self.x1 = x1
-        self.y1 = y1
-        self.x2 = x2
-        self.y2 = y2
-
-        self._create_geometry()
-
-    def _create_geometry(self):
-        path = QPainterPath()
-        path.moveTo(self.x1, self.y1)
-        path.lineTo(self.x2, self.y2)
-        self.setPath(path)
-
-    def set_geometry(self, start_point: QPointF, end_point: QPointF):
-        self.x1 = start_point.x()
-        self.y1 = start_point.y()
-        self.x2 = end_point.x()
-        self.y2 = end_point.y()
-
-        self._create_geometry()
-
     @property
     def type_name(self):
         return "line"
+
+    def set_geometry(self, start, end):
+        path = QPainterPath()
+        path.moveTo(start)
+        path.lineTo(end)
+        self.setPath(path)
 
     def to_dict(self):
         return {
             "type": self.type_name,
             "props": {
-                "x1": self.x1,
-                "y1": self.y1,
-                "x2": self.x2,
-                "y2": self.y2,
                 "color": self.pen().color().name(),
                 "stroke_width": self.pen().width()
             }
+        }
+
+class Group(QGraphicsItemGroup):
+    def __init__(self):
+        super().__init__()
+
+        self.setFlag(QGraphicsItemGroup.GraphicsItemFlag.ItemIsSelectable, True)
+        self.setFlag(QGraphicsItemGroup.GraphicsItemFlag.ItemIsMovable, True)
+        self.setHandlesChildEvents(True)
+
+    @property
+    def type_name(self) -> str:
+        return "group"
+
+    def set_pen_width(self, value: int):
+        for child in self.childItems():
+            if isinstance(child, Shape):
+                child.set_pen_width(value)
+
+    def set_active_color(self, color: str):
+        for child in self.childItems():
+            if isinstance(child, Shape):
+                child.set_active_color(color)
+
+    def to_dict(self) -> dict:
+        return {
+            "type": self.type_name,
+            "pos": [self.x(), self.y()],
+            "children": [
+                child.to_dict()
+                for child in self.childItems()
+                if hasattr(child, "to_dict")
+            ]
         }
