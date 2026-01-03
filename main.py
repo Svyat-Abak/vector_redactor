@@ -1,4 +1,3 @@
-# vector_editor/main.py
 import sys
 from PySide6.QtWidgets import QApplication
 from src.app import VectorEditorWindow

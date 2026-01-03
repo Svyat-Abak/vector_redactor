@@ -5,10 +5,6 @@ from PySide6.QtGui import QPen, QColor, QPainterPath
 from PySide6.QtCore import QPointF
 
 
-# ======================================================
-# БАЗОВАЯ ФИГУРА
-# ======================================================
-
 class Shape(QGraphicsPathItem):
     def __init__(self, color: str = "black", stroke_width: int = 2):
         super().__init__()
@@ -27,8 +23,6 @@ class Shape(QGraphicsPathItem):
         self.setFlag(QGraphicsPathItem.GraphicsItemFlag.ItemIsMovable)
         self.setFlag(QGraphicsPathItem.GraphicsItemFlag.ItemSendsGeometryChanges)
 
-    # ===== КОНТРАКТ =====
-    # Декоратор @abstractmethod работает даже без ABC
     @property
     @abstractmethod
     def type_name(self) -> str:
@@ -42,15 +36,10 @@ class Shape(QGraphicsPathItem):
     def set_geometry(self, start_point: QPointF, end_point: QPointF):
         pass
 
-    # ===== ОБЩАЯ ЛОГИКА =====
     def set_active_color(self, color: str):
         self.color = color
         self._setup_pen()
 
-
-# ======================================================
-# RECTANGLE
-# ======================================================
 
 class Rectangle(Shape):
     def __init__(self, x, y, w, h, color="black", stroke_width=2):
@@ -94,10 +83,6 @@ class Rectangle(Shape):
         }
 
 
-# ======================================================
-# ELLIPSE
-# ======================================================
-
 class Ellipse(Shape):
     def __init__(self, x, y, w, h, color="black", stroke_width=2):
         super().__init__(color, stroke_width)
@@ -138,11 +123,6 @@ class Ellipse(Shape):
                 "stroke_width": self.pen().width()
             }
         }
-
-
-# ======================================================
-# LINE
-# ======================================================
 
 class Line(Shape):
     def __init__(self, x1, y1, x2, y2, color="black", stroke_width=2):

@@ -14,7 +14,6 @@ class EditorCanvas(QGraphicsView):
 
         self.setMouseTracking(True)
 
-        # ИНСТРУМЕНТЫ (STATE)
         self.tools = {
             "select": SelectionTool(self),
             "rect": CreationTool(self, "rect"),
@@ -28,13 +27,10 @@ class EditorCanvas(QGraphicsView):
         if tool_name in self.tools:
             self.current_tool = self.tools[tool_name]
 
-            # Курсор — часть UX
             if tool_name == "select":
                 self.setCursor(Qt.ArrowCursor)
             else:
                 self.setCursor(Qt.CrossCursor)
-
-    # --- ДЕЛЕГИРОВАНИЕ СОБЫТИЙ ---
 
     def mousePressEvent(self, event):
         self.current_tool.mouse_press(event)

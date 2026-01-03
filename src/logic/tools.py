@@ -6,14 +6,10 @@ from PySide6.QtWidgets import QGraphicsView
 from src.logic.factory import ShapeFactory
 
 
-# ======================================================
-# БАЗОВЫЙ ИНСТРУМЕНТ (STATE)
-# ======================================================
-
 class Tool(ABC):
     def __init__(self, view):
-        self.view = view          # EditorCanvas
-        self.scene = view.scene   # QGraphicsScene
+        self.view = view     
+        self.scene = view.scene  
 
     @abstractmethod
     def mouse_press(self, event):
@@ -27,23 +23,16 @@ class Tool(ABC):
     def mouse_release(self, event):
         pass
 
-
-# ======================================================
-# ИНСТРУМЕНТ ВЫДЕЛЕНИЯ
-# ======================================================
-
 class SelectionTool(Tool):
     def mouse_press(self, event):
         QGraphicsView.mousePressEvent(self.view, event)
 
-        # Если кликнули по объекту — сжимаем "руку"
         if self.view.itemAt(event.pos()):
             self.view.setCursor(Qt.ClosedHandCursor)
 
     def mouse_move(self, event):
         QGraphicsView.mouseMoveEvent(self.view, event)
 
-        # Hover-эффект (если не тащим)
         if not (event.buttons() & Qt.LeftButton):
             if self.view.itemAt(event.pos()):
                 self.view.setCursor(Qt.OpenHandCursor)
@@ -54,10 +43,6 @@ class SelectionTool(Tool):
         QGraphicsView.mouseReleaseEvent(self.view, event)
         self.view.setCursor(Qt.ArrowCursor)
 
-
-# ======================================================
-# ИНСТРУМЕНТ СОЗДАНИЯ ФИГУР
-# ======================================================
 
 class CreationTool(Tool):
     def __init__(self, view, shape_type, color="black"):
@@ -73,7 +58,6 @@ class CreationTool(Tool):
         if event.button() == Qt.LeftButton:
             self.start_pos = self.view.mapToScene(event.pos())
 
-            # Создаем фигуру нулевого размера
             self.temp_shape = ShapeFactory.create_shape(
                 self.shape_type,
                 self.start_pos,
