@@ -1,77 +1,46 @@
-from abc import ABC, abstractmethod
-
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QGraphicsView
-
+from PySide6.QtCore import QPointF
 from src.logic.factory import ShapeFactory
 
+class SelectionTool:
+    def __init__(self, canvas):
+        self.canvas = canvas
 
-class Tool(ABC):
-    def __init__(self, view):
-        self.view = view     
-        self.scene = view.scene  
-
-    @abstractmethod
-    def mouse_press(self, event):
-        pass
-
-    @abstractmethod
-    def mouse_move(self, event):
-        pass
-
-    @abstractmethod
-    def mouse_release(self, event):
-        pass
-
-class SelectionTool(Tool):
-    def mouse_press(self, event):
-        QGraphicsView.mousePressEvent(self.view, event)
-
-        if self.view.itemAt(event.pos()):
-            self.view.setCursor(Qt.ClosedHandCursor)
-
-    def mouse_move(self, event):
-        QGraphicsView.mouseMoveEvent(self.view, event)
-
-        if not (event.buttons() & Qt.LeftButton):
-            if self.view.itemAt(event.pos()):
-                self.view.setCursor(Qt.OpenHandCursor)
-            else:
-                self.view.setCursor(Qt.ArrowCursor)
-
-    def mouse_release(self, event):
-        QGraphicsView.mouseReleaseEvent(self.view, event)
-        self.view.setCursor(Qt.ArrowCursor)
+    def mousePressEvent(self, event): pass
+    def mouseMoveEvent(self, event): pass
+    def mouseReleaseEvent(self, event): pass
 
 
-class CreationTool(Tool):
-    def __init__(self, view, shape_type, color="black"):
-        super().__init__(view)
+class CreationTool:
+    def __init__(self, canvas):
+        self.canvas = canvas
+        self.shape_type = "rect"
+        self.start = None
+        self.temp_item = None
 
+    def set_shape(self, shape_type: str):
         self.shape_type = shape_type
-        self.color = color
 
-        self.start_pos = None
-        self.temp_shape = None
+    def mousePressEvent(self, event):
+        self.start = self.canvas.mapToScene(event.pos())
+        self.temp_item = ShapeFactory.create(
+            self.shape_type,
+            self.start,
+            self.start
+        )
+        if self.temp_item:
+            self.canvas.scene.addItem(self.temp_item)
 
-    def mouse_press(self, event):
-        if event.button() == Qt.LeftButton:
-            self.start_pos = self.view.mapToScene(event.pos())
+    def mouseMoveEvent(self, event):
+        if not self.temp_item:
+            return
+        end = self.canvas.mapToScene(event.pos())
+        self.canvas.scene.removeItem(self.temp_item)
+        self.temp_item = ShapeFactory.create(
+            self.shape_type,
+            self.start,
+            end
+        )
+        self.canvas.scene.addItem(self.temp_item)
 
-            self.temp_shape = ShapeFactory.create_shape(
-                self.shape_type,
-                self.start_pos,
-                self.start_pos,
-                self.color
-            )
-            self.scene.addItem(self.temp_shape)
-
-    def mouse_move(self, event):
-        if self.temp_shape and self.start_pos:
-            current_pos = self.view.mapToScene(event.pos())
-            self.temp_shape.set_geometry(self.start_pos, current_pos)
-
-    def mouse_release(self, event):
-        if event.button() == Qt.LeftButton:
-            self.start_pos = None
-            self.temp_shape = None
+    def mouseReleaseEvent(self, event):
+        self.temp_item = None

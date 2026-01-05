@@ -1,23 +1,34 @@
-from src.logic.shapes import Rectangle, Ellipse, Line
-
+from PySide6.QtWidgets import (
+    QGraphicsRectItem,
+    QGraphicsEllipseItem,
+    QGraphicsLineItem
+)
+from PySide6.QtGui import QPen, QBrush
+from PySide6.QtCore import Qt, QRectF, QPointF
 
 class ShapeFactory:
     @staticmethod
-    def create_shape(shape_type, start_point, end_point, color="black"):
-        x1, y1 = start_point.x(), start_point.y()
-        x2, y2 = end_point.x(), end_point.y()
-
-        if shape_type == "line":
-            return Line(x1, y1, x2, y2, color)
-
-        x = min(x1, x2)
-        y = min(y1, y2)
-        w = abs(x2 - x1)
-        h = abs(y2 - y1)
+    def create(shape_type: str, start: QPointF, end: QPointF):
+        pen = QPen(Qt.black, 2)
+        brush = QBrush(Qt.lightGray)
 
         if shape_type == "rect":
-            return Rectangle(x, y, w, h, color)
-        elif shape_type == "ellipse":
-            return Ellipse(x, y, w, h, color)
+            item = QGraphicsRectItem(QRectF(start, end).normalized())
+            item.setBrush(brush)
 
-        raise ValueError(f"Unknown shape type: {shape_type}")
+        elif shape_type == "ellipse":
+            item = QGraphicsEllipseItem(QRectF(start, end).normalized())
+            item.setBrush(brush)
+
+        elif shape_type == "line":
+            item = QGraphicsLineItem(start.x(), start.y(), end.x(), end.y())
+
+        else:
+            return None
+
+        item.setPen(pen)
+        item.setFlags(
+            item.GraphicsItemFlag.ItemIsSelectable |
+            item.GraphicsItemFlag.ItemIsMovable
+        )
+        return item
